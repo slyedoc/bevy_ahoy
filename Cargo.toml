@@ -12,26 +12,26 @@ categories = ["game-development"]
 include = ["/src", "/license*", "/examples"]
 
 [dependencies]
-avian3d = { version = "0.4.1", default-features = false, features = ["default-collider", "3d", "f32"] }
-bevy_ecs = { version = "0.17", default-features = false }
-bevy_app = { version = "0.17", default-features = false }
-bevy_derive = { version = "0.17", default-features = false }
-bevy_utils = { version = "0.17", default-features = false }
-bevy_math = { version = "0.17", default-features = false }
-bevy_reflect = { version = "0.17", default-features = false }
-bevy_transform = { version = "0.17", default-features = false }
-bevy_time = { version = "0.17", default-features = false }
-bevy_enhanced_input = { version = "0.20", default-features = false }
+avian3d = { git = "https://github.com/avianphysics/avian", branch = "bevy-0.18", default-features = false, features = ["default-collider", "3d", "f32"] }
+bevy_ecs = { version = "0.18.0-rc", default-features = false }
+bevy_app = { version = "0.18.0-rc", default-features = false }
+bevy_derive = { version = "0.18.0-rc", default-features = false }
+bevy_utils = { version = "0.18.0-rc", default-features = false }
+bevy_math = { version = "0.18.0-rc", default-features = false }
+bevy_reflect = { version = "0.18.0-rc", default-features = false }
+bevy_transform = { version = "0.18.0-rc", default-features = false }
+bevy_time = { version = "0.18.0-rc", default-features = false }
+bevy_enhanced_input = { git = "https://github.com/simgine/bevy_enhanced_input", branch = "bevy-0.18", default-features = false }
 tracing = { version = "0.1", default-features = false }
-avian_pickup = { version= "0.3.0" }
+avian_pickup = { git = "https://github.com/slyedoc/avian_pickup", branch = "bevy-0.18" }
 
 
 [dev-dependencies]
-bevy = { version = "0.17", features = ["track_location", "dynamic_linking", "file_watcher"] }
+bevy = { version = "0.18.0-rc", features = ["track_location", "dynamic_linking", "file_watcher"] }
 bevy_trenchbroom = "0.11.0"
 bevy_trenchbroom_avian = "0.11.0"
-bevy_mod_mipmap_generator = { git = "https://github.com/DGriffin91/bevy_mod_mipmap_generator" }
-avian3d = "0.4.1"
+bevy_mod_mipmap_generator = { git = "https://github.com/DGriffin91/bevy_mod_mipmap_generator", branch = "bevy18" } #rc
+avian3d = { git = "https://github.com/avianphysics/avian", branch = "bevy-0.18" }
 bevy_framepace = "0.20.0"
 bevy_fix_cursor_unlock_web = "0.2.0"
 wasm-bindgen = "=0.2.106"
