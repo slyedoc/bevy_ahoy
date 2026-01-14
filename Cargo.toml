@@ -12,7 +12,7 @@ categories = ["game-development"]
 include = ["/src", "/license*", "/examples"]
 
 [dependencies]
-avian3d = { git = "https://github.com/avianphysics/avian", branch = "bevy-0.18", default-features = false, features = ["default-collider", "3d", "f32"] }
+avian3d = { git = "https://github.com/slyedoc/avian", branch = "bevy-main", default-features = false, features = ["default-collider", "3d", "f32"] }
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["bevy_reflect"] }
 bevy_app = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_derive = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
@@ -23,15 +23,15 @@ bevy_transform = { git = "https://github.com/bevyengine/bevy", branch = "main", 
 bevy_time = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_enhanced_input = { git = "https://github.com/slyedoc/bevy_enhanced_input", branch = "bevy-main", default-features = false }
 tracing = { version = "0.1", default-features = false }
-avian_pickup = { git = "https://github.com/slyedoc/avian_pickup", branch = "bevy-0.18" }
+avian_pickup = { git = "https://github.com/slyedoc/avian_pickup", branch = "bevy-main" }
 
 
 [dev-dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", features = ["track_location", "dynamic_linking", "file_watcher"] }
 bevy_trenchbroom = "0.11.0"
 bevy_trenchbroom_avian = "0.11.0"
-bevy_mod_mipmap_generator = { git = "https://github.com/DGriffin91/bevy_mod_mipmap_generator", branch = "bevy18" } #rc
-avian3d = { git = "https://github.com/avianphysics/avian", branch = "bevy-0.18" }
+bevy_mod_mipmap_generator = { git = "https://github.com/slyedoc/bevy_mod_mipmap_generator", branch = "bevy-main" }
+avian3d = { git = "https://github.com/slyedoc/avian", branch = "bevy-main" }
 bevy_framepace = "0.20.0"
 bevy_fix_cursor_unlock_web = "0.2.0"
 wasm-bindgen = "=0.2.106"
@@ -74,4 +74,4 @@ rustdoc-args = ["-Zunstable-options", "--generate-link-to-definition"]
 all-features = true
 
 [patch.crates-io]
-avian3d = { git = "https://github.com/avianphysics/avian" }
+avian3d = { git = "https://github.com/slyedoc/avian", branch = "bevy-main" }
