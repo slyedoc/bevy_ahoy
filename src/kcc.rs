@@ -1282,6 +1282,8 @@ fn calculate_wish_velocity(ctx: &CtxItem) -> Vec3 {
     right = right.normalize_or_zero();
 
     let wish_vel = movement.y * forward + movement.x * right;
+    // Preserve input magnitude (clamped to 1.0) for variable speed (gamepad analog, backpedal, etc.)
+    let magnitude = wish_vel.length().min(1.0);
     let wish_dir = wish_vel.normalize_or_zero();
 
     // clamp the speed lower if ducking
@@ -1290,7 +1292,7 @@ fn calculate_wish_velocity(ctx: &CtxItem) -> Vec3 {
     } else {
         ctx.cfg.speed
     };
-    wish_dir * speed
+    wish_dir * speed * magnitude
 }
 
 #[must_use]
@@ -1300,6 +1302,8 @@ fn calculate_3d_wish_velocity(ctx: &CtxItem) -> Vec3 {
     let right = right(ctx.state.orientation);
 
     let wish_vel = movement.y * forward + movement.x * right;
+    // Preserve input magnitude (clamped to 1.0) for variable speed
+    let magnitude = wish_vel.length().min(1.0);
     let wish_dir = wish_vel.normalize_or_zero();
 
     // clamp the speed lower if ducking
@@ -1308,7 +1312,7 @@ fn calculate_3d_wish_velocity(ctx: &CtxItem) -> Vec3 {
     } else {
         ctx.cfg.speed
     };
-    wish_dir * speed
+    wish_dir * speed * magnitude
 }
 
 fn handle_crouching(move_and_slide: &MoveAndSlide, waters: &Query<Entity>, ctx: &mut CtxItem) {
