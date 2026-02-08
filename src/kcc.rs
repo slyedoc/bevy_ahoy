@@ -879,7 +879,7 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
         &ctx.cfg.filter,
         |hit| {
             ctx.output.touching_entities.push(hit.into());
-            true
+            MoveAndSlideHitResponse::Accept
         },
     );
     let lost_velocity = (ctx.velocity.0 - out.projected_velocity).length();
@@ -1332,7 +1332,7 @@ fn is_intersecting(move_and_slide: &MoveAndSlide, waters: &Query<Entity>, ctx: &
     // No need to worry about skin width, depenetration will take care of it.
     // If we used skin width, we could not stand up if we are closer than skin width to the ground,
     // which happens when going under a slope.
-    move_and_slide.query_pipeline.shape_intersections_callback(
+    move_and_slide.spatial_query.shape_intersections_callback(
         ctx.derived.collider(&ctx.state),
         ctx.transform.translation,
         ctx.transform.rotation,

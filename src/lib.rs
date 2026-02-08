@@ -404,7 +404,7 @@ impl CharacterControllerDerivedProps {
     pub fn radius(&self, state: &CharacterControllerState) -> f32 {
         match self.collider(state).shape_scaled().as_typed_shape() {
             avian3d::parry::shape::TypedShape::Ball(ball) => ball.radius,
-            avian3d::parry::shape::TypedShape::Cuboid(cuboid) => cuboid.half_extents.max(),
+            avian3d::parry::shape::TypedShape::Cuboid(cuboid) => cuboid.half_extents.max_element(),
             avian3d::parry::shape::TypedShape::Capsule(capsule) => capsule.radius,
             avian3d::parry::shape::TypedShape::Segment(segment) => segment.length() / 2.0,
             avian3d::parry::shape::TypedShape::Triangle(triangle) => triangle.circumcircle().1,
@@ -430,7 +430,7 @@ impl CharacterControllerDerivedProps {
             avian3d::parry::shape::TypedShape::Cylinder(cylinder) => cylinder.radius,
             avian3d::parry::shape::TypedShape::Cone(cone) => cone.radius,
             avian3d::parry::shape::TypedShape::RoundCuboid(round_shape) => {
-                round_shape.border_radius + round_shape.inner_shape.half_extents.max()
+                round_shape.border_radius + round_shape.inner_shape.half_extents.max_element()
             }
             avian3d::parry::shape::TypedShape::RoundTriangle(round_shape) => {
                 round_shape.border_radius + round_shape.inner_shape.circumcircle().1

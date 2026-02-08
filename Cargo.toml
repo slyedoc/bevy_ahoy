@@ -12,7 +12,7 @@ categories = ["game-development"]
 include = ["/src", "/license*", "/examples"]
 
 [dependencies]
-avian3d = { git = "https://github.com/slyedoc/avian", branch = "bevy-main", default-features = false, features = ["default-collider", "3d", "f32"] }
+avian3d = { git = "https://github.com/slyedoc/avian", branch = "bevy-main", default-features = false, features = ["parry-f32", "3d"] }
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["bevy_reflect"] }
 bevy_app = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_derive = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
@@ -75,3 +75,6 @@ all-features = true
 
 [patch.crates-io]
 avian3d = { git = "https://github.com/slyedoc/avian", branch = "bevy-main" }
+parry3d = { git = "https://github.com/slyedoc/parry", branch = "bevy-main" }
+parry3d-f64 = { git = "https://github.com/slyedoc/parry", branch = "bevy-main" }
+glamx = { git = "https://github.com/slyedoc/glamx", branch = "bevy-main" }
