@@ -16,27 +16,27 @@ pub mod prelude {
     };
 
     pub use crate::{
-        AhoyPlugin, AhoySystems, CharacterController, PickupConfig,
+        AhoyPlugin, AhoySystems, CharacterController,
         camera::{CharacterControllerCamera, CharacterControllerCameraOf},
         input::{
             Climbdown, Crane, Crouch, DropObject, GlobalMovement, Jump, Mantle, Movement,
             PullObject, RotateCamera, SwimUp, Tac, ThrowObject, YankCamera,
         },
-        pickup,
         water::{Water, WaterLevel, WaterState},
     };
 }
 
 use crate::{input::AccumulatedInput, prelude::*};
-use avian_pickup::AvianPickupPlugin;
-pub use avian_pickup::{
-    self as pickup,
-    prelude::{
-        AvianPickupActor as PickupConfig, AvianPickupActorHoldConfig as PickupHoldConfig,
-        AvianPickupActorPullConfig as PickupPullConfig,
-        AvianPickupActorThrowConfig as PickupThrowConfig,
-    },
-};
+// TODO: avian_pickup needs multiframe API update
+// use avian_pickup::AvianPickupPlugin;
+// pub use avian_pickup::{
+//     self as pickup,
+//     prelude::{
+//         AvianPickupActor as PickupConfig, AvianPickupActorHoldConfig as PickupHoldConfig,
+//         AvianPickupActorPullConfig as PickupPullConfig,
+//         AvianPickupActorThrowConfig as PickupThrowConfig,
+//     },
+// };
 use avian3d::{
     character_controller::move_and_slide::MoveHitData,
     parry::shape::{Capsule, SharedShape},
@@ -96,9 +96,9 @@ impl Plugin for AhoyPlugin {
             kcc::plugin(self.schedule),
             water::plugin,
             fixed_update_utils::plugin,
-            pickup_glue::plugin,
+            // pickup_glue::plugin, // TODO: needs avian_pickup multiframe update
             dynamics::plugin(self.schedule),
-            AvianPickupPlugin::default(),
+            // AvianPickupPlugin::default(), // TODO: needs avian_pickup multiframe update
         ));
     }
 }

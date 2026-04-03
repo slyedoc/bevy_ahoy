@@ -54,7 +54,7 @@ struct RigidBodyComponents {
 }
 
 fn run_kcc(
-    mut kccs: Query<Ctx>,
+    mut kccs: Query<(Entity, Ctx)>,
     cams: Query<&Transform, Without<CharacterController>>,
     time: Res<Time>,
     move_and_slide: MoveAndSlide,
@@ -62,13 +62,16 @@ fn run_kcc(
     colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
     rigid_bodies: Query<RigidBodyComponents>,
     waters: Query<Entity, With<Water>>,
-    default_friction: Res<DefaultFriction>,
+    world_lookup: PhysicsWorldLookup,
+    world_friction: Query<&DefaultFriction>,
 ) {
     let mut colliders = colliders.transmute_lens_inner();
     let colliders = colliders.query();
     let mut waters = waters.transmute_lens_inner();
     let waters = waters.query();
-    for mut ctx in &mut kccs {
+    for (entity, mut ctx) in &mut kccs {
+        let physics_world = world_lookup.world_entity_of(entity);
+        let default_friction = world_friction.get(physics_world).cloned().unwrap_or_default();
         ctx.output.mantle = None;
         ctx.output.touching_entities.clear();
         ctx.state.last_ground.tick(time.delta());
