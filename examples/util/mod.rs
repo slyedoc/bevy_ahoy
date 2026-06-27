@@ -5,18 +5,22 @@ use std::f32::consts::TAU;
 use avian3d::prelude::*;
 use bevy::{
     camera::Exposure,
-    light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap, light_consts::lux},
-    pbr::Atmosphere,
+    light::{
+        Atmosphere, CascadeShadowConfigBuilder, DirectionalLightShadowMap,
+        atmosphere::ScatteringMedium, light_consts::lux,
+    },
     platform::collections::HashSet,
     post_process::bloom::Bloom,
     prelude::*,
-    window::{CursorGrabMode, CursorOptions},
+    // TODO: needs a bevy-main compatible fork (used by unlock_cursor_web)
+    // window::{CursorGrabMode, CursorOptions},
 };
 use bevy_ahoy::{CharacterControllerOutput, CharacterControllerState, prelude::*};
 use bevy_ecs::world::FilteredEntityRef;
 use bevy_enhanced_input::prelude::{Release, *};
-use bevy_fix_cursor_unlock_web::{FixPointerUnlockPlugin, ForceUnlockCursor};
-use bevy_framepace::FramepacePlugin;
+// TODO: needs a bevy-main compatible fork
+// use bevy_fix_cursor_unlock_web::{FixPointerUnlockPlugin, ForceUnlockCursor};
+// use bevy_framepace::FramepacePlugin;
 use bevy_mod_mipmap_generator::{MipmapGeneratorPlugin, generate_mipmaps};
 
 pub(super) struct ExampleUtilPlugin;
@@ -25,8 +29,9 @@ impl Plugin for ExampleUtilPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             MipmapGeneratorPlugin,
-            FixPointerUnlockPlugin,
-            FramepacePlugin,
+            // TODO: needs a bevy-main compatible fork
+            // FixPointerUnlockPlugin,
+            // FramepacePlugin,
         ))
         .add_systems(Startup, (setup_ui, spawn_crosshair))
         .add_systems(
@@ -41,9 +46,10 @@ impl Plugin for ExampleUtilPlugin {
         .add_observer(tweak_camera)
         .add_observer(tweak_directional_light)
         .add_observer(toggle_debug)
-        .add_observer(unlock_cursor_web)
+        // TODO: needs a bevy-main compatible fork
+        // .add_observer(unlock_cursor_web)
         .insert_resource(DirectionalLightShadowMap { size: 4096 })
-        .insert_resource(AmbientLight::NONE)
+        .insert_resource(GlobalAmbientLight::NONE)
         .add_systems(Update, turn_sun)
         .add_input_context::<DebugInput>();
     }
@@ -223,7 +229,12 @@ fn reset_player_inner(
     camera_transform.rotation = Quat::IDENTITY;
 }
 
-fn tweak_camera(insert: On<Insert, Camera3d>, mut commands: Commands, assets: Res<AssetServer>) {
+fn tweak_camera(
+    insert: On<Insert, Camera3d>,
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
+) {
     commands.entity(insert.entity).insert((
         EnvironmentMapLight {
             diffuse_map: assets.load("environment_maps/voortrekker_interior_1k_diffuse.ktx2"),
@@ -235,7 +246,7 @@ fn tweak_camera(insert: On<Insert, Camera3d>, mut commands: Commands, assets: Re
             fov: 70.0_f32.to_radians(),
             ..default()
         }),
-        Atmosphere::EARTH,
+        Atmosphere::earth(scattering_mediums.add(ScatteringMedium::earth(256, 256))),
         Exposure { ev100: 9.0 },
         Bloom::default(),
     ));
@@ -259,7 +270,7 @@ fn tweak_directional_light(
     commands.spawn((
         // The shadow map can only be configured on a freshly spawned light
         DirectionalLight {
-            shadows_enabled: true,
+            shadow_maps_enabled: true,
             illuminance: lux::AMBIENT_DAYLIGHT,
             ..*light
         },
@@ -285,13 +296,14 @@ fn turn_sun(mut suns: Query<&mut Transform, With<DirectionalLight>>, time: Res<T
     }
 }
 
-fn unlock_cursor_web(
-    _unlock: On<ForceUnlockCursor>,
-    mut cursor_options: Single<&mut CursorOptions>,
-) {
-    cursor_options.grab_mode = CursorGrabMode::None;
-    cursor_options.visible = true;
-}
+// TODO: needs a bevy-main compatible fork
+// fn unlock_cursor_web(
+//     _unlock: On<ForceUnlockCursor>,
+//     mut cursor_options: Single<&mut CursorOptions>,
+// ) {
+//     cursor_options.grab_mode = CursorGrabMode::None;
+//     cursor_options.visible = true;
+// }
 
 /// Show a crosshair for better aiming
 fn spawn_crosshair(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -319,7 +331,7 @@ fn tweak_materials(
         let AssetEvent::LoadedWithDependencies { id } = event else {
             continue;
         };
-        let Some(mat) = mats.get_mut(*id) else {
+        let Some(mut mat) = mats.get_mut(*id) else {
             continue;
         };
         if mat

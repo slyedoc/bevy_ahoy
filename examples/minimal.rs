@@ -85,7 +85,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     commands.spawn((
         Transform::from_xyz(0.0, 1.0, 0.0).looking_at(vec3(1.0, -2.0, -2.0), Vec3::Y),
         DirectionalLight {
-            shadows_enabled: true,
+            //shadows_enabled: true,
             ..default()
         },
     ));
@@ -94,7 +94,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     // Ahoy will deal with it all.
     // Here we load a glTF file and create a convex hull collider for each mesh.
     commands.spawn((
-        SceneRoot(assets.load("maps/playground.glb#Scene0")),
+        WorldAssetRoot(assets.load(GltfAssetLabel::Scene(0).from_asset("maps/playground.glb"))),
         RigidBody::Static,
         ColliderConstructorHierarchy::new(ColliderConstructor::ConvexHullFromMesh),
     ));

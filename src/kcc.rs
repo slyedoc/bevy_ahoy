@@ -62,7 +62,7 @@ fn run_kcc(
     colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
     rigid_bodies: Query<RigidBodyComponents>,
     waters: Query<Entity, With<Water>>,
-    default_friction: Res<DefaultFriction>,
+    default_friction: Single<&DefaultFriction, With<MainPhysicsWorld>>,
 ) {
     let mut colliders = colliders.transmute_lens_inner();
     let colliders = colliders.query();
@@ -116,7 +116,7 @@ fn run_kcc(
                 &time,
                 &colliders,
                 &rigid_bodies,
-                &default_friction,
+                *default_friction,
                 &mut ctx,
             );
 
@@ -933,7 +933,7 @@ fn closest_wall_normal(
         ctx.transform.rotation,
         dist + ctx.cfg.move_and_slide.skin_width,
         &ctx.cfg.filter,
-        |contact_point, normal| {
+        |_entity, contact_point, normal| {
             if normal.y.abs() < ctx.cfg.min_walk_cos
                 && !closest_wall.is_some_and(|(p, _)| p.penetration < contact_point.penetration)
             {
