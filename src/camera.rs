@@ -95,8 +95,8 @@ pub(crate) fn sync_camera_transform(
             } else {
                 cfg.standing_view_height
             };
-            let new_translation =
-                kcc_transform.translation + Vec3::Y * (-height / 2.0 + view_height);
+            let new_translation = kcc_transform.translation
+                + (Vec3::Y * (-height / 2.0 + view_height)).to_precision();
             camera_transform.translation.x = new_translation.x;
             camera_transform.translation.z = new_translation.z;
             if !camera.enable_smoothing {
@@ -113,7 +113,7 @@ pub(crate) fn sync_camera_transform(
                     time.delta_secs(),
                 );
             } else if new_translation.y - camera_transform.translation.y
-                < camera.teleport_detection_distance
+                < camera.teleport_detection_distance.to_precision()
             {
                 let decay_rate = f32::ln(100_000_000.0);
                 camera_transform.translation.y.smooth_nudge(
@@ -139,14 +139,14 @@ fn rotate_camera(
     let Ok(mut transform) = transforms.get_mut(camera.get()) else {
         return;
     };
-    let (mut yaw, mut pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
+    let (mut yaw, mut pitch, _) = transform.rotation.to_render().to_euler(EulerRot::YXZ);
 
     let delta = -rotate.value;
     yaw += delta.x.to_radians();
     pitch += delta.y.to_radians();
     pitch = pitch.clamp(-TAU / 4.0 + 0.01, TAU / 4.0 - 0.01);
 
-    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
+    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0).to_precision();
 }
 
 fn yank_camera(
@@ -166,9 +166,9 @@ fn yank_camera(
         return;
     };
 
-    let (mut yaw, pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
+    let (mut yaw, pitch, _) = transform.rotation.to_render().to_euler(EulerRot::YXZ);
     let rotation_delta = camera_of.yank_speed * trigger.value * time.delta_secs();
     yaw -= rotation_delta;
 
-    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
+    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0).to_precision();
 }
