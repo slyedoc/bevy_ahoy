@@ -12,7 +12,7 @@ categories = ["game-development"]
 include = ["/src", "/license*", "/examples"]
 
 [dependencies]
-avian3d = { git = "https://github.com/slyedoc/avian", branch = "solari-multi", default-features = false, features = ["parry-f32", "3d"] }
+avian3d = { git = "https://github.com/slyedoc/avian", branch = "aurora", default-features = false, features = ["parry-f32", "3d"] }
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["bevy_reflect"] }
 bevy_app = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_derive = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
@@ -21,9 +21,9 @@ bevy_math = { git = "https://github.com/bevyengine/bevy", branch = "main", defau
 bevy_reflect = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_transform = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_time = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
-bevy_enhanced_input = { git = "https://github.com/slyedoc/bevy_enhanced_input", branch = "bevy-main", default-features = false }
+bevy_enhanced_input = { git = "https://github.com/slyedoc/bevy_enhanced_input", branch = "aurora", default-features = false }
 tracing = { version = "0.1", default-features = false }
-avian_pickup = { git = "https://github.com/slyedoc/avian_pickup", branch = "solari-multi" }
+avian_pickup = { git = "https://github.com/slyedoc/avian_pickup", branch = "aurora" }
 
 
 [dev-dependencies]
@@ -31,7 +31,7 @@ bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", features =
 bevy_trenchbroom = "0.11.0"
 bevy_trenchbroom_avian = "0.11.0"
 bevy_mod_mipmap_generator = { git = "https://github.com/slyedoc/bevy_mod_mipmap_generator", branch = "bevy-main" }
-avian3d = { git = "https://github.com/slyedoc/avian", branch = "solari-multi" }
+avian3d = { git = "https://github.com/slyedoc/avian", branch = "aurora" }
 bevy_framepace = "0.20.0"
 bevy_fix_cursor_unlock_web = "0.2.0"
 wasm-bindgen = "=0.2.108"
@@ -74,7 +74,7 @@ rustdoc-args = ["-Zunstable-options", "--generate-link-to-definition"]
 all-features = true
 
 [patch.crates-io]
-avian3d = { git = "https://github.com/slyedoc/avian", branch = "solari-multi" }
+avian3d = { git = "https://github.com/slyedoc/avian", branch = "aurora" }
 parry3d = { git = "https://github.com/slyedoc/parry", branch = "bevy-main" }
 parry3d-f64 = { git = "https://github.com/slyedoc/parry", branch = "bevy-main" }
 glamx = { git = "https://github.com/slyedoc/glamx", branch = "bevy-main" }
