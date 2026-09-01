@@ -130,7 +130,7 @@ pub enum AhoySystems {
     WaterState,
     CustomPositionIntegration,
     Transform,
-    SpeculativeMargin::ZERO,
+    SpeculativeCcd::ZERO,
     CollidingEntities,
 )]
 #[component(on_add=CharacterController::on_add)]
@@ -267,7 +267,7 @@ impl CharacterController {
     }
 }
 
-fn on_insert_collider(trigger: On<Insert, Collider>, mut commands: Commands) {
+fn on_insert_collider(trigger: On<Insert<Collider>>, mut commands: Commands) {
     commands.run_system_cached_with(setup_collider, trigger.entity);
 }
 
@@ -284,7 +284,7 @@ fn setup_collider(
     };
     cfg.filter.excluded_entities.add(entity);
 
-    let standing_aabb = collider.aabb(default(), Rotation::default());
+    let standing_aabb = collider.aabb(default(), Rotation::default(), 0.0);
     let standing_height = standing_aabb.max.y - standing_aabb.min.y;
 
     derived.standing_collider = collider.clone();

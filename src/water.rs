@@ -51,7 +51,7 @@ fn update_water(
                 } else {
                     cfg.standing_view_height
                 };
-        for (collider, position, rotation, water) in waters.iter_many(colliding_entities.iter()) {
+        for (collider, position, rotation, water) in waters.iter_many(colliding_entities.iter()).flatten() {
             let level = if collider.contains_point(*position, *rotation, eye_pos) {
                 WaterLevel::Head
             } else if collider.contains_point(*position, *rotation, kcc_center) {
