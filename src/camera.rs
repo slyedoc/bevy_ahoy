@@ -1,5 +1,6 @@
 use std::{f32::consts::TAU, time::Duration};
 
+#[cfg(feature = "pickup")]
 use avian_pickup::actor::AvianPickupActor;
 use bevy_ecs::{lifecycle::HookContext, relationship::Relationship, world::DeferredWorld};
 
@@ -16,7 +17,8 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component, Clone, Copy, Debug)]
 #[relationship(relationship_target = CharacterControllerCamera)]
-#[require(AvianPickupActor, Transform)]
+#[cfg_attr(feature = "pickup", require(AvianPickupActor))]
+#[require(Transform)]
 #[component(on_add = Self::on_add)]
 pub struct CharacterControllerCameraOf {
     #[relationship]

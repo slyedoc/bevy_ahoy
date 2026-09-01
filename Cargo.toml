@@ -11,8 +11,15 @@ keywords = ["kcc", "character", "controller", "source", "quake"]
 categories = ["game-development"]
 include = ["/src", "/license*", "/examples"]
 
+[features]
+default = ["pickup"]
+# The avian_pickup glue (pull / drop / throw actions on the KCC camera).
+pickup = ["dep:avian_pickup"]
+
 [dependencies]
-avian3d = { git = "https://github.com/slyedoc/avian", branch = "aurora", default-features = false, features = ["parry-f32", "3d"] }
+# Upstream URLs: consumers redirect avian / enhanced_input onto their fork branch through
+# `[patch]` (a URL cannot be patched with itself, so the fork URL must not appear here).
+avian3d = { git = "https://github.com/avianphysics/avian", branch = "main", default-features = false, features = ["parry-f32", "3d"] }
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["bevy_reflect"] }
 bevy_app = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_derive = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
@@ -21,9 +28,9 @@ bevy_math = { git = "https://github.com/bevyengine/bevy", branch = "main", defau
 bevy_reflect = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_transform = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_time = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
-bevy_enhanced_input = { git = "https://github.com/slyedoc/bevy_enhanced_input", branch = "aurora", default-features = false }
+bevy_enhanced_input = { git = "https://github.com/simgine/bevy_enhanced_input", branch = "master", default-features = false }
 tracing = { version = "0.1", default-features = false }
-avian_pickup = { git = "https://github.com/slyedoc/avian_pickup", branch = "aurora" }
+avian_pickup = { git = "https://github.com/slyedoc/avian_pickup", branch = "aurora", optional = true }
 
 
 [dev-dependencies]
@@ -31,7 +38,7 @@ bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", features =
 bevy_trenchbroom = "0.11.0"
 bevy_trenchbroom_avian = "0.11.0"
 bevy_mod_mipmap_generator = { git = "https://github.com/slyedoc/bevy_mod_mipmap_generator", branch = "bevy-main" }
-avian3d = { git = "https://github.com/slyedoc/avian", branch = "aurora" }
+avian3d = { git = "https://github.com/avianphysics/avian", branch = "main" }
 bevy_framepace = "0.20.0"
 bevy_fix_cursor_unlock_web = "0.2.0"
 wasm-bindgen = "=0.2.108"

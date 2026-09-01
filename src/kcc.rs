@@ -62,7 +62,7 @@ fn run_kcc(
     colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
     rigid_bodies: Query<RigidBodyComponents>,
     waters: Query<Entity, With<Water>>,
-    default_friction: Single<&DefaultFriction, With<MainPhysicsWorld>>,
+    default_friction: Res<DefaultFriction>,
 ) {
     let mut colliders = colliders.transmute_lens_inner();
     let colliders = colliders.query();
@@ -116,7 +116,7 @@ fn run_kcc(
                 &time,
                 &colliders,
                 &rigid_bodies,
-                *default_friction,
+                &default_friction,
                 &mut ctx,
             );
 

@@ -16,19 +16,26 @@ pub mod prelude {
     };
 
     pub use crate::{
-        AhoyPlugin, AhoySystems, CharacterController, PickupConfig,
+        AhoyPlugin, AhoySystems, CharacterController,
         camera::{CharacterControllerCamera, CharacterControllerCameraOf},
         input::{
-            Climbdown, Crane, Crouch, DropObject, GlobalMovement, Jump, Mantle, Movement,
-            PullObject, RotateCamera, SwimUp, Tac, ThrowObject, YankCamera,
+            Climbdown, Crane, Crouch, GlobalMovement, Jump, Mantle, Movement, RotateCamera,
+            SwimUp, Tac, YankCamera,
         },
-        pickup,
         water::{Water, WaterLevel, WaterState},
+    };
+    #[cfg(feature = "pickup")]
+    pub use crate::{
+        PickupConfig,
+        input::{DropObject, PullObject, ThrowObject},
+        pickup,
     };
 }
 
 use crate::{input::AccumulatedInput, prelude::*};
+#[cfg(feature = "pickup")]
 use avian_pickup::AvianPickupPlugin;
+#[cfg(feature = "pickup")]
 pub use avian_pickup::{
     self as pickup,
     prelude::{
@@ -54,6 +61,7 @@ mod dynamics;
 mod fixed_update_utils;
 pub mod input;
 mod kcc;
+#[cfg(feature = "pickup")]
 mod pickup_glue;
 mod water;
 
@@ -96,10 +104,10 @@ impl Plugin for AhoyPlugin {
             kcc::plugin(self.schedule),
             water::plugin,
             fixed_update_utils::plugin,
-            pickup_glue::plugin,
             dynamics::plugin(self.schedule),
-            AvianPickupPlugin::default(),
         ));
+        #[cfg(feature = "pickup")]
+        app.add_plugins((pickup_glue::plugin, AvianPickupPlugin::default()));
     }
 }
 
