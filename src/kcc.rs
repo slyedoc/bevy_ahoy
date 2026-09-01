@@ -1,6 +1,4 @@
 use avian3d::character_controller::move_and_slide::MoveHitData;
-use bevy_math::Affine3A;
-
 use bevy_ecs::{
     intern::Interned,
     query::QueryData,
@@ -26,7 +24,6 @@ pub(super) fn plugin(schedule: Interned<dyn ScheduleLabel>) -> impl Fn(&mut App)
 #[derive(QueryData)]
 #[query_data(mutable, derive(Debug))]
 struct Ctx {
-    entity: Entity,
     velocity: Write<LinearVelocity>,
     state: Write<CharacterControllerState>,
     derived: Read<CharacterControllerDerivedProps>,
@@ -60,8 +57,7 @@ fn run_kcc(
     mut kccs: Query<Ctx>,
     cams: Query<&Transform, Without<CharacterController>>,
     time: Res<Time>,
-    mut move_and_slide: MoveAndSlide,
-    world_lookup: PhysicsWorldLookup,
+    move_and_slide: MoveAndSlide,
     // TODO: allow this to be other KCCs
     colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
     rigid_bodies: Query<RigidBodyComponents>,
@@ -73,9 +69,6 @@ fn run_kcc(
     let mut waters = waters.transmute_lens_inner();
     let waters = waters.query();
     for mut ctx in &mut kccs {
-        // Scope this character's casts to its own physics world (frame-local space).
-        move_and_slide.set_world(world_lookup.world_entity_of(ctx.entity));
-
         ctx.output.mantle = None;
         ctx.output.touching_entities.clear();
         ctx.state.last_ground.tick(time.delta());
@@ -96,8 +89,8 @@ fn run_kcc(
         ctx.state.orientation = ctx
             .cam
             .and_then(|e| Option::<&Transform>::copied(cams.get(e.get()).ok()))
-            .map(|transform| transform.rotation.to_render())
-            .unwrap_or(ctx.transform.rotation.to_render());
+            .map(|transform| transform.rotation)
+            .unwrap_or(ctx.transform.rotation);
 
         let wish_velocity = calculate_wish_velocity(&ctx);
         let wish_velocity_3d = calculate_3d_wish_velocity(&ctx);
@@ -160,12 +153,12 @@ fn run_kcc(
 fn depenetrate_character(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
     let offset = move_and_slide.depenetrate(
         ctx.derived.collider(&ctx.state),
-        ctx.transform.translation.to_render(),
-        ctx.transform.rotation.to_render(),
+        ctx.transform.translation,
+        ctx.transform.rotation,
         &((&ctx.cfg.move_and_slide).into()),
         &ctx.cfg.filter,
     );
-    ctx.transform.translation += offset.to_precision();
+    ctx.transform.translation += offset;
 }
 
 fn ground_move(wish_velocity: Vec3, time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
@@ -188,7 +181,7 @@ fn ground_move(wish_velocity: Vec3, time: &Time, move_and_slide: &MoveAndSlide, 
     let hit = cast_move(movement, move_and_slide, ctx);
 
     if hit.is_none() {
-        ctx.transform.translation += movement.to_precision();
+        ctx.transform.translation += movement;
         ctx.velocity.0 -= ctx.state.platform_velocity;
         depenetrate_character(move_and_slide, ctx);
         snap_to_ground(move_and_slide, ctx);
@@ -311,7 +304,7 @@ fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
     let hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
 
     let dist = hit.map(|hit| hit.distance).unwrap_or(cast_len);
-    ctx.transform.translation += (cast_dir * dist).to_precision();
+    ctx.transform.translation += cast_dir * dist;
 
     // Verify we have enough space to stand
     let hit = cast_move(
@@ -340,7 +333,7 @@ fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
         return;
     };
     let hit = hit.unwrap();
-    ctx.transform.translation += (cast_dir * hit.distance).to_precision();
+    ctx.transform.translation += cast_dir * hit.distance;
     depenetrate_character(move_and_slide, ctx);
 
     let vec_up_pos = ctx.transform.translation;
@@ -404,7 +397,7 @@ fn handle_crane_movement(
     let top_hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
     let travel_dist = top_hit.map(|hit| hit.distance).unwrap_or(cast_len);
 
-    ctx.transform.translation += (cast_dir * travel_dist).to_precision();
+    ctx.transform.translation += cast_dir * travel_dist;
     let velocity_stash = ctx.velocity.0;
     **ctx.velocity = ctx.state.platform_velocity;
     move_character(time, move_and_slide, ctx);
@@ -421,7 +414,7 @@ fn handle_crane_movement(
         let cast_dir = vel_dir;
         let cast_len = ctx.cfg.min_crane_ledge_space;
         if cast_move(cast_dir * cast_len, move_and_slide, ctx).is_none() {
-            ctx.transform.translation += (cast_dir * speed * time.delta_secs()).to_precision();
+            ctx.transform.translation += cast_dir * speed * time.delta_secs();
             depenetrate_character(move_and_slide, ctx);
             ctx.state.crane_height_left = None;
         }
@@ -434,7 +427,7 @@ fn handle_crane_movement(
         ctx.state.crane_height_left = None;
         return;
     }
-    ctx.transform.translation += (cast_dir * speed * time.delta_secs()).to_precision();
+    ctx.transform.translation += cast_dir * speed * time.delta_secs();
     depenetrate_character(move_and_slide, ctx);
     ctx.state.crane_height_left = None;
 }
@@ -613,10 +606,10 @@ fn available_ledge_height(
     let hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
 
     let up_dist = hit.map(|hit| hit.distance).unwrap_or(cast_len);
-    ctx.transform.translation += (cast_dir * up_dist).to_precision();
+    ctx.transform.translation += cast_dir * up_dist;
 
     // Move onto ledge (penetration explicitly allowed since the ledge can be below a wall)
-    ctx.transform.translation += (-wall_normal * min_depth).to_precision();
+    ctx.transform.translation += -wall_normal * min_depth;
 
     // Move down
     let cast_dir = Dir3::NEG_Y;
@@ -634,7 +627,7 @@ fn available_ledge_height(
     ctx.transform.translation = original_position;
 
     // step up
-    ctx.transform.translation.y += ledge_height.to_precision();
+    ctx.transform.translation.y += ledge_height;
 
     // check the full climb
 
@@ -646,7 +639,7 @@ fn available_ledge_height(
         ctx.velocity.0 = original_velocity;
         return None;
     };
-    ctx.transform.translation += (cast_dir * cast_len).to_precision();
+    ctx.transform.translation += cast_dir * cast_len;
 
     let cast_dir = Dir3::NEG_Y;
     let cast_len = ledge_height;
@@ -741,7 +734,7 @@ fn available_mantle_height(
         return None;
     }
 
-    ctx.transform.translation += (cast_dir * wall_hit.distance).to_precision();
+    ctx.transform.translation += cast_dir * wall_hit.distance;
     depenetrate_character(move_and_slide, ctx);
     let wall_pos = ctx.transform.translation;
 
@@ -752,13 +745,13 @@ fn available_mantle_height(
     let up_dist = cast_move_hands(cast_dir * cast_len, move_and_slide, ctx)
         .map(|hit| hit.distance)
         .unwrap_or(cast_len);
-    ctx.transform.translation += (cast_dir * up_dist).to_precision();
+    ctx.transform.translation += cast_dir * up_dist;
 
     let radius = ctx.derived.radius(&ctx.state);
     let hand_to_wall_dist =
         radius + ctx.cfg.move_and_slide.skin_width + ctx.cfg.min_ledge_grab_space.half_size.z;
     // Move onto ledge (penetration explicitly allowed since the ledge can be below a wall)
-    ctx.transform.translation += (-wall_normal * hand_to_wall_dist).to_precision();
+    ctx.transform.translation += -wall_normal * hand_to_wall_dist;
 
     // Move down
     let cast_dir = Dir3::NEG_Y;
@@ -777,7 +770,7 @@ fn available_mantle_height(
     ctx.transform.translation = wall_pos;
 
     // step up
-    ctx.transform.translation.y += ledge_height.to_precision();
+    ctx.transform.translation.y += ledge_height;
 
     // check the full mantle
 
@@ -789,7 +782,7 @@ fn available_mantle_height(
         ctx.velocity.0 = original_velocity;
         return None;
     };
-    ctx.transform.translation += (cast_dir * cast_len).to_precision();
+    ctx.transform.translation += cast_dir * cast_len;
 
     let cast_dir = Dir3::NEG_Y;
     let cast_len = ledge_height;
@@ -852,7 +845,7 @@ fn handle_climbdown(
         return;
     };
     let original_position = ctx.transform.translation;
-    ctx.transform.translation += (cast_dir * cast_len).to_precision();
+    ctx.transform.translation += cast_dir * cast_len;
 
     let Some((mantle_state, mantle_output)) =
         available_mantle_height(-wish_velocity, time, move_and_slide, ctx)
@@ -878,8 +871,8 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
 
     let out = move_and_slide.move_and_slide(
         ctx.derived.collider(&ctx.state),
-        ctx.transform.translation.to_render(),
-        ctx.transform.rotation.to_render(),
+        ctx.transform.translation,
+        ctx.transform.rotation,
         ctx.velocity.0,
         time.delta(),
         &config,
@@ -891,7 +884,7 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
     );
     let lost_velocity = (ctx.velocity.0 - out.projected_velocity).length();
     ctx.state.tac_velocity = ctx.state.tac_velocity * 0.99 + lost_velocity;
-    ctx.transform.translation = out.position.to_precision();
+    ctx.transform.translation = out.position;
     ctx.velocity.0 = out.projected_velocity;
 }
 
@@ -901,7 +894,7 @@ fn snap_to_ground(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
 
     let hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
     let up_dist = hit.map(|h| h.distance).unwrap_or(cast_len);
-    let start = ctx.transform.translation + (cast_dir * up_dist).to_precision();
+    let start = ctx.transform.translation + cast_dir * up_dist;
     let cast_dir = Vec3::NEG_Y;
     let cast_len = up_dist + ctx.cfg.step_size;
 
@@ -921,10 +914,8 @@ fn snap_to_ground(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
         return;
     }
     let original_position = ctx.transform.translation;
-    ctx.transform.translation = start + (cast_dir * hit.distance).to_precision();
-    if original_position.y - ctx.transform.translation.y
-        > ctx.cfg.step_down_detection_distance.to_precision()
-    {
+    ctx.transform.translation = start + cast_dir * hit.distance;
+    if original_position.y - ctx.transform.translation.y > ctx.cfg.step_down_detection_distance {
         ctx.state.last_step_down.reset();
     }
     depenetrate_character(move_and_slide, ctx);
@@ -938,8 +929,8 @@ fn closest_wall_normal(
     let mut closest_wall: Option<(ContactPoint, Dir3)> = None;
     move_and_slide.intersections(
         ctx.derived.collider(&ctx.state),
-        ctx.transform.translation.to_render(),
-        ctx.transform.rotation.to_render(),
+        ctx.transform.translation,
+        ctx.transform.rotation,
         dist + ctx.cfg.move_and_slide.skin_width,
         &ctx.cfg.filter,
         |_entity, contact_point, normal| {
@@ -1000,8 +991,8 @@ fn update_grounded(
 fn cast_move(movement: Vec3, move_and_slide: &MoveAndSlide, ctx: &CtxItem) -> Option<MoveHitData> {
     move_and_slide.cast_move(
         ctx.derived.collider(&ctx.state),
-        ctx.transform.translation.to_render(),
-        ctx.transform.rotation.to_render(),
+        ctx.transform.translation,
+        ctx.transform.rotation,
         movement,
         ctx.cfg.move_and_slide.skin_width,
         &ctx.cfg.filter,
@@ -1016,8 +1007,8 @@ fn cast_move_hands(
 ) -> Option<MoveHitData> {
     move_and_slide.cast_move(
         &ctx.derived.hand_collider,
-        ctx.transform.translation.to_render(),
-        ctx.transform.rotation.to_render(),
+        ctx.transform.translation,
+        ctx.transform.rotation,
         movement,
         ctx.cfg.move_and_slide.skin_width,
         &ctx.cfg.filter,
@@ -1065,17 +1056,23 @@ fn calculate_platform_movement(
     let platform_ang_vel = platform.ang_vel.map(|v| v.0).unwrap_or(Vec3::ZERO);
 
     let ground_com = (platform.rot.0 * platform_com) + platform.pos.0;
-    let platform_transform = Affine3A::from_rotation_translation(platform.rot.0, ground_com);
-    let next_platform_transform = Affine3A::from_rotation_translation(
-        Quat::from_scaled_axis(platform_ang_vel * time.delta_secs()) * platform.rot.0,
-        ground_com + platform_lin_vel * time.delta_secs(),
-    );
-    let mut touch_point = ctx.transform.translation.to_render();
+    let platform_transform = Transform::IDENTITY
+        .with_translation(ground_com)
+        .with_rotation(platform.rot.0);
+    let next_platform_transform = Transform::IDENTITY
+        .with_translation(ground_com + platform_lin_vel * time.delta_secs())
+        .with_rotation(
+            Quat::from_scaled_axis(platform_ang_vel * time.delta_secs()) * platform.rot.0,
+        );
+    let mut touch_point = ctx.transform.translation;
     touch_point.y = ground.y;
 
-    let platform_movement = next_platform_transform
-        .transform_point3(platform_transform.inverse().transform_point3(touch_point))
-        - touch_point;
+    let platform_movement = next_platform_transform.transform_point(
+        platform_transform
+            .compute_affine()
+            .inverse()
+            .transform_point3(touch_point),
+    ) - touch_point;
 
     ctx.state.platform_velocity = platform_movement / time.delta_secs();
     ctx.state.platform_angular_velocity = platform_ang_vel;
@@ -1337,8 +1334,8 @@ fn is_intersecting(move_and_slide: &MoveAndSlide, waters: &Query<Entity>, ctx: &
     // which happens when going under a slope.
     move_and_slide.spatial_query.shape_intersections_callback(
         ctx.derived.collider(&ctx.state),
-        ctx.transform.translation.to_render(),
-        ctx.transform.rotation.to_render(),
+        ctx.transform.translation,
+        ctx.transform.rotation,
         &ctx.cfg.filter,
         |e| {
             if waters.contains(e) {
@@ -1363,7 +1360,7 @@ fn spin_cams(
         {
             cam.rotate_axis(
                 Dir3::Y,
-                (ctx.state.platform_angular_velocity.y * time.delta_secs()).to_precision(),
+                ctx.state.platform_angular_velocity.y * time.delta_secs(),
             );
         }
     }
