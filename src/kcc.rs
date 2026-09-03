@@ -62,7 +62,9 @@ fn run_kcc(
     colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
     rigid_bodies: Query<RigidBodyComponents>,
     waters: Query<Entity, With<Water>>,
-    default_friction: Res<DefaultFriction>,
+    // Per-world component on the multiworld avian branch; the main world's default
+    // applies to every character until per-world friction matters.
+    default_friction: Single<&DefaultFriction, With<MainPhysicsWorld>>,
 ) {
     let mut colliders = colliders.transmute_lens_inner();
     let colliders = colliders.query();
@@ -116,7 +118,7 @@ fn run_kcc(
                 &time,
                 &colliders,
                 &rigid_bodies,
-                &default_friction,
+                *default_friction,
                 &mut ctx,
             );
 
