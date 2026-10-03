@@ -25,6 +25,7 @@ bevy_app = { git = "https://github.com/bevyengine/bevy", branch = "main", defaul
 bevy_derive = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_utils = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_math = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["std"] }
+bevy_shape = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["std"] }
 bevy_reflect = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_transform = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_time = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
