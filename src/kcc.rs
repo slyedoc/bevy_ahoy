@@ -64,7 +64,7 @@ fn run_kcc(
     waters: Query<Entity, With<Water>>,
     // Per-world component on the multiworld avian branch; the main world's default
     // applies to every character until per-world friction matters.
-    default_friction: Single<&DefaultFriction, With<MainPhysicsWorld>>,
+    default_friction: Single<&DefaultFriction, With<MainPhysicsEnvironment>>,
 ) {
     let mut colliders = colliders.transmute_lens_inner();
     let colliders = colliders.query();

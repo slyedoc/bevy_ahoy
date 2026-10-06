@@ -9,8 +9,8 @@ pub mod prelude {
         bevy_ecs::prelude::*,
         bevy_enhanced_input::prelude::*,
         bevy_math::prelude::*,
-        bevy_shape::prelude::*,
         bevy_reflect::prelude::*,
+        bevy_shape::prelude::*,
         bevy_time::prelude::*,
         bevy_transform::prelude::*,
         bevy_utils::prelude::*,
@@ -20,8 +20,8 @@ pub mod prelude {
         AhoyPlugin, AhoySystems, CharacterController,
         camera::{CharacterControllerCamera, CharacterControllerCameraOf},
         input::{
-            Climbdown, Crane, Crouch, GlobalMovement, Jump, Mantle, Movement, RotateCamera,
-            SwimUp, Tac, YankCamera,
+            Climbdown, Crane, Crouch, GlobalMovement, Jump, Mantle, Movement, RotateCamera, SwimUp,
+            Tac, YankCamera,
         },
         water::{Water, WaterLevel, WaterState},
     };
