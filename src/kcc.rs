@@ -58,7 +58,7 @@ fn run_kcc(
     mut kccs: Query<Ctx>,
     cams: Query<&Transform, Without<CharacterController>>,
     time: Res<Time>,
-    move_and_slide: MoveAndSlide,
+    move_and_slides: MoveAndSlide,
     // TODO: allow this to be other KCCs
     colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
     rigid_bodies: Query<RigidBodyComponents>,
@@ -73,12 +73,14 @@ fn run_kcc(
     let waters = waters.query();
     for mut ctx in &mut kccs {
         // In no environment: avian does not simulate it (and has said so), so neither do we.
-        let Some(default_friction) = environments
-            .environment_of(ctx.entity)
-            .and_then(|environment| frictions.get(environment).ok())
-        else {
+        let Some(environment) = environments.environment_of(ctx.entity) else {
             continue;
         };
+        let Ok(default_friction) = frictions.get(environment) else {
+            continue;
+        };
+        // It moves and slides against its own environment's colliders, in its frame.
+        let move_and_slide = move_and_slides.in_environment(environment);
         ctx.output.mantle = None;
         ctx.output.touching_entities.clear();
         ctx.state.last_ground.tick(time.delta());
@@ -154,7 +156,7 @@ fn run_kcc(
     }
 }
 
-fn depenetrate_character(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
+fn depenetrate_character(move_and_slide: &EnvironmentMoveAndSlide, ctx: &mut CtxItem) {
     let offset = move_and_slide.depenetrate(
         ctx.derived.collider(&ctx.state),
         ctx.transform.translation,
@@ -165,7 +167,12 @@ fn depenetrate_character(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
     ctx.transform.translation += offset;
 }
 
-fn ground_move(wish_velocity: Vec3, time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
+fn ground_move(
+    wish_velocity: Vec3,
+    time: &Time,
+    move_and_slide: &EnvironmentMoveAndSlide,
+    ctx: &mut CtxItem,
+) {
     ctx.velocity.y = 0.0;
     ground_accelerate(wish_velocity, ctx.cfg.acceleration_hz, time, ctx);
     ctx.velocity.y = 0.0;
@@ -215,7 +222,12 @@ fn ground_accelerate(wish_velocity: Vec3, acceleration_hz: f32, time: &Time, ctx
     ctx.velocity.0 += accel_speed * wish_dir;
 }
 
-fn air_move(wish_velocity: Vec3, time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
+fn air_move(
+    wish_velocity: Vec3,
+    time: &Time,
+    move_and_slide: &EnvironmentMoveAndSlide,
+    ctx: &mut CtxItem,
+) {
     air_accelerate(wish_velocity, ctx.cfg.air_acceleration_hz, time, ctx);
     ctx.velocity.0 += ctx.state.platform_velocity;
 
@@ -246,7 +258,7 @@ fn air_accelerate(wish_velocity: Vec3, acceleration_hz: f32, time: &Time, ctx: &
 fn water_move(
     mut wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) {
     if ctx.input.swim_up {
@@ -285,7 +297,7 @@ fn water_accelerate(wish_velocity: Vec3, acceleration_hz: f32, time: &Time, ctx:
     ctx.velocity.0 += accel_speed * wish_dir;
 }
 
-fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
+fn step_move(time: &Time, move_and_slide: &EnvironmentMoveAndSlide, ctx: &mut CtxItem) {
     let original_position = ctx.transform.translation;
     let original_velocity = ctx.velocity.0;
     let original_touching_entities = ctx.output.touching_entities.clone();
@@ -358,7 +370,7 @@ fn step_move(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
 fn handle_crane_movement(
     wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) {
     let Some(crane_height) = ctx.state.crane_height_left else {
@@ -439,7 +451,7 @@ fn handle_crane_movement(
 fn handle_mantle_movement(
     wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     colliders: &Query<ColliderComponents>,
     ctx: &mut CtxItem,
 ) {
@@ -519,7 +531,7 @@ fn calc_climb_factor(ctx: &CtxItem, wish_velocity: Vec3) -> f32 {
 fn update_crane_state(
     wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) {
     let Some(crane_time) = ctx.input.craned.clone() else {
@@ -548,7 +560,7 @@ fn update_crane_state(
 fn available_crane_height(
     wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) -> Option<f32> {
     available_ledge_height(
@@ -568,7 +580,7 @@ fn available_ledge_height(
     min_cos: f32,
     max_height: f32,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) -> Option<f32> {
     let original_position = ctx.transform.translation;
@@ -665,7 +677,7 @@ fn available_ledge_height(
 fn update_mantle_state(
     wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) {
     if ctx.state.crane_height_left.is_some() {
@@ -701,7 +713,7 @@ fn update_mantle_state(
 fn available_mantle_height(
     wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) -> Option<(MantleState, MantleOutput)> {
     let original_position = ctx.transform.translation;
@@ -823,7 +835,7 @@ fn available_mantle_height(
 
 fn handle_climbdown(
     wish_velocity: Vec3,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     time: &Time,
     ctx: &mut CtxItem,
 ) {
@@ -867,7 +879,7 @@ fn handle_climbdown(
     ctx.output.mantle = Some(mantle_output);
 }
 
-fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
+fn move_character(time: &Time, move_and_slide: &EnvironmentMoveAndSlide, ctx: &mut CtxItem) {
     let mut config = ctx.cfg.move_and_slide.clone();
     if let Some(grounded) = ctx.state.grounded {
         config.planes.push(Dir3::new_unchecked(grounded.normal1));
@@ -892,7 +904,7 @@ fn move_character(time: &Time, move_and_slide: &MoveAndSlide, ctx: &mut CtxItem)
     ctx.velocity.0 = out.projected_velocity;
 }
 
-fn snap_to_ground(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
+fn snap_to_ground(move_and_slide: &EnvironmentMoveAndSlide, ctx: &mut CtxItem) {
     let cast_dir = Vec3::Y;
     let cast_len = ctx.cfg.ground_distance;
 
@@ -927,7 +939,7 @@ fn snap_to_ground(move_and_slide: &MoveAndSlide, ctx: &mut CtxItem) {
 
 fn closest_wall_normal(
     dist: f32,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &CtxItem,
 ) -> Option<(Vec3, Dir3)> {
     let mut closest_wall: Option<(ContactPoint, Dir3)> = None;
@@ -950,7 +962,7 @@ fn closest_wall_normal(
 }
 
 fn update_grounded(
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     colliders: &Query<ColliderComponents>,
     time: &Time,
     ctx: &mut CtxItem,
@@ -992,7 +1004,11 @@ fn update_grounded(
 }
 
 #[must_use]
-fn cast_move(movement: Vec3, move_and_slide: &MoveAndSlide, ctx: &CtxItem) -> Option<MoveHitData> {
+fn cast_move(
+    movement: Vec3,
+    move_and_slide: &EnvironmentMoveAndSlide,
+    ctx: &CtxItem,
+) -> Option<MoveHitData> {
     move_and_slide.cast_move(
         ctx.derived.collider(&ctx.state),
         ctx.transform.translation,
@@ -1006,7 +1022,7 @@ fn cast_move(movement: Vec3, move_and_slide: &MoveAndSlide, ctx: &CtxItem) -> Op
 #[must_use]
 fn cast_move_hands(
     movement: Vec3,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &CtxItem,
 ) -> Option<MoveHitData> {
     move_and_slide.cast_move(
@@ -1133,7 +1149,7 @@ fn friction(
 fn handle_tac(
     wish_velocity: Vec3,
     time: &Time,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) -> Option<Vec3> {
     if ctx.state.mantle.is_some() {
@@ -1202,7 +1218,7 @@ fn handle_jump(
     wish_velocity: Vec3,
     time: &Time,
     colliders: &Query<ColliderComponents>,
-    move_and_slide: &MoveAndSlide,
+    move_and_slide: &EnvironmentMoveAndSlide,
     ctx: &mut CtxItem,
 ) {
     // Handle tic tacs when we're in the air beyond coyote-time.
@@ -1319,7 +1335,11 @@ fn calculate_3d_wish_velocity(ctx: &CtxItem) -> Vec3 {
     wish_dir * speed * magnitude
 }
 
-fn handle_crouching(move_and_slide: &MoveAndSlide, waters: &Query<Entity>, ctx: &mut CtxItem) {
+fn handle_crouching(
+    move_and_slide: &EnvironmentMoveAndSlide,
+    waters: &Query<Entity>,
+    ctx: &mut CtxItem,
+) {
     if ctx.input.crouched {
         ctx.state.crouching = true;
     } else if ctx.state.crouching {
@@ -1331,7 +1351,11 @@ fn handle_crouching(move_and_slide: &MoveAndSlide, waters: &Query<Entity>, ctx: 
 }
 
 #[must_use]
-fn is_intersecting(move_and_slide: &MoveAndSlide, waters: &Query<Entity>, ctx: &CtxItem) -> bool {
+fn is_intersecting(
+    move_and_slide: &EnvironmentMoveAndSlide,
+    waters: &Query<Entity>,
+    ctx: &CtxItem,
+) -> bool {
     let mut intersecting = false;
     // No need to worry about skin width, depenetration will take care of it.
     // If we used skin width, we could not stand up if we are closer than skin width to the ground,
