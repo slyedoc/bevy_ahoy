@@ -24,6 +24,7 @@ pub(super) fn plugin(schedule: Interned<dyn ScheduleLabel>) -> impl Fn(&mut App)
 #[derive(QueryData)]
 #[query_data(mutable, derive(Debug))]
 struct Ctx {
+    entity: Entity,
     velocity: Write<LinearVelocity>,
     state: Write<CharacterControllerState>,
     derived: Read<CharacterControllerDerivedProps>,
@@ -62,15 +63,22 @@ fn run_kcc(
     colliders: Query<ColliderComponents, (Without<CharacterController>, Without<Sensor>)>,
     rigid_bodies: Query<RigidBodyComponents>,
     waters: Query<Entity, With<Water>>,
-    // Per-world component on the multiworld avian branch; the main world's default
-    // applies to every character until per-world friction matters.
-    default_friction: Single<&DefaultFriction, With<MainPhysicsEnvironment>>,
+    // Per-environment on the multiworld avian branch: each character takes its own's.
+    frictions: Query<&DefaultFriction, With<PhysicsEnvironment>>,
+    environments: PhysicsEnvironmentLookup,
 ) {
     let mut colliders = colliders.transmute_lens_inner();
     let colliders = colliders.query();
     let mut waters = waters.transmute_lens_inner();
     let waters = waters.query();
     for mut ctx in &mut kccs {
+        // In no environment: avian does not simulate it (and has said so), so neither do we.
+        let Some(default_friction) = environments
+            .environment_of(ctx.entity)
+            .and_then(|environment| frictions.get(environment).ok())
+        else {
+            continue;
+        };
         ctx.output.mantle = None;
         ctx.output.touching_entities.clear();
         ctx.state.last_ground.tick(time.delta());
@@ -114,13 +122,7 @@ fn run_kcc(
 
             // Friction is handled before we add in any base velocity. That way, if we are on a conveyor,
             //  we don't slow when standing still, relative to the conveyor.
-            friction(
-                &time,
-                &colliders,
-                &rigid_bodies,
-                *default_friction,
-                &mut ctx,
-            );
+            friction(&time, &colliders, &rigid_bodies, default_friction, &mut ctx);
 
             validate_velocity(&mut ctx);
 
