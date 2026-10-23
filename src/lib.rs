@@ -17,7 +17,7 @@ pub mod prelude {
     };
 
     pub use crate::{
-        AhoyPlugin, AhoySystems, CharacterController,
+        AhoyPlugin, AhoySystems, CharacterController, Frozen,
         camera::{CharacterControllerCamera, CharacterControllerCameraOf},
         input::{
             Climbdown, Crane, Crouch, GlobalMovement, Jump, Mantle, Movement, RotateCamera, SwimUp,
@@ -118,6 +118,12 @@ pub enum AhoySystems {
     MoveCharacters,
     ApplyForcesToDynamicRigidBodies,
 }
+
+/// A character the controller leaves alone (no gravity, input or depenetration), for whatever
+/// holds it in place (a seat, a ladder, a cutscene); that owns its `Transform` meanwhile.
+#[derive(Component, Clone, Copy, Default, Reflect, Debug)]
+#[reflect(Component, Default)]
+pub struct Frozen;
 
 #[derive(Component, Clone, Reflect, Debug)]
 #[reflect(Component)]

@@ -55,7 +55,7 @@ struct RigidBodyComponents {
 }
 
 fn run_kcc(
-    mut kccs: Query<Ctx>,
+    mut kccs: Query<Ctx, Without<Frozen>>,
     cams: Query<&Transform, Without<CharacterController>>,
     time: Res<Time>,
     move_and_slides: MoveAndSlide,
