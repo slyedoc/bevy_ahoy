@@ -339,7 +339,25 @@ fn step_move(time: &Time, move_and_slide: &EnvironmentMoveAndSlide, ctx: &mut Ct
     move_character(time, move_and_slide, ctx);
 
     let cast_dir = Dir3::NEG_Y;
-    let hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
+    let mut hit = cast_move(cast_dir * cast_len, move_and_slide, ctx);
+
+    // Moving slowly, a frame's advance never carries the body past the skin gap onto the step
+    // (or only onto its edge, a slanted contact): step onto its top a little further on, in the
+    // space the ledge check just cleared.
+    if !hit.is_some_and(|h| h.normal1.y >= ctx.cfg.min_walk_cos) {
+        let ahead =
+            original_velocity.with_y(0.0).normalize_or_zero() * ctx.cfg.min_step_ledge_space * 0.5;
+        if ahead != Vec3::ZERO {
+            let here = ctx.transform.translation;
+            ctx.transform.translation += ahead;
+            let top = cast_move(cast_dir * cast_len, move_and_slide, ctx);
+            if top.is_some_and(|t| t.normal1.y >= ctx.cfg.min_walk_cos) {
+                hit = top;
+            } else {
+                ctx.transform.translation = here;
+            }
+        }
+    }
 
     // If we either fall or slide down, use the direct move-and-slide instead
     if !hit.is_some_and(|h| h.normal1.y >= ctx.cfg.min_walk_cos) {
